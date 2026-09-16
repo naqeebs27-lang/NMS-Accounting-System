@@ -27,7 +27,9 @@ jobs:
       run: msbuild AccountingSystem.sln /p:Configuration=Release
 
     - name: Install Inno Setup
-      run: choco install innosetup -y
+      run: |
+        choco install innosetup --no-progress -y
+        refreshenv
 
     - name: Create installer with Inno Setup
       run: iscc installer/installer_script.iss
