@@ -1,0 +1,36 @@
+name: Build and Package Installer
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1.2.0
+
+    - name: Restore dependencies
+      run: nuget restore AccountingSystem.sln
+
+    - name: Build solution
+      run: msbuild AccountingSystem.sln /p:Configuration=Release
+
+    - name: Create installer with Inno Setup
+      run: iscc installer_script.iss
+
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Installer
+        path: Output/NaqeebsAccountingSystemSetup.exe
