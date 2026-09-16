@@ -1,0 +1,28 @@
+<UserControl x:Class="AccountingSystem.App.Views.LedgerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+            <Label Content="From"/>
+            <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="130"/>
+            <Label Content="To"/>
+            <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="130"/>
+            <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Account ID" Binding="{Binding AccountId}" Width="100"/>
+                <DataGridTextColumn Header="Account" Binding="{Binding AccountName}" Width="*"/>
+                <DataGridTextColumn Header="Sum of Debit" Binding="{Binding SumDebit, StringFormat=N2}" Width="140"/>
+                <DataGridTextColumn Header="Sum of Credit" Binding="{Binding SumCredit, StringFormat=N2}" Width="140"/>
+                <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=N2}" Width="140"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>
