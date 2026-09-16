@@ -12,10 +12,10 @@ jobs:
 
     steps:
     - name: Checkout source
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v4
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      uses: microsoft/setup-msbuild@v3
 
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v3
@@ -27,14 +27,11 @@ jobs:
       run: msbuild AccountingSystem.sln /p:Configuration=Release
 
     - name: Install Inno Setup
-      shell: cmd
-      run: |
-        choco install innosetup --no-progress -y
-        echo C:\Program Files (x86)\Inno Setup 6>> %GITHUB_PATH%
+      run: choco install innosetup --no-progress -y
 
     - name: Create installer with Inno Setup
       shell: cmd
-      run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/installer_script.iss'
+      run: '"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\installer_script.iss'
 
     - name: Upload installer artifact
       uses: actions/upload-artifact@v4
