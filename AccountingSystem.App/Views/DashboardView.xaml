@@ -10,7 +10,12 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Naqeebs Accounting" FontSize="24" FontWeight="Bold" />
+        <!-- Header with logo + title -->
+        <DockPanel LastChildFill="False">
+            <Image DockPanel.Dock="Left" Height="48" Width="160" Margin="0,0,12,0" Stretch="Uniform"
+                   Source="pack://siteoforigin:,,,/Resources/nms.png"/>
+            <TextBlock VerticalAlignment="Center" Text="Naqeebs Accounting" FontSize="24" FontWeight="Bold"/>
+        </DockPanel>
 
         <UniformGrid Grid.Row="1" Columns="3" Rows="2" Margin="0,16,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top">
             <Button Margin="8" Padding="12" Content="Chart of Accounts" Command="{Binding DataContext.NavigateToChartCommand, RelativeSource={RelativeSource AncestorType=Window}}" />

@@ -1,0 +1,10 @@
+name: Deprecated - main workflow
+
+on: [workflow_dispatch]
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deprecated
+        run: echo "This workflow is deprecated. CI uses .github/workflows/ci-build-installer.yml"
