@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-and-package:
-    runs-on: [self-hosted, windows, x64]   # 👈 targets your NMS runner
+    runs-on: [self-hosted, windows, x64]   # 👈 your NMS runner
     timeout-minutes: 60
     env:
       SIGN_PFX: ${{ secrets.SIGN_PFX }}
@@ -18,6 +18,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -28,7 +33,7 @@ jobs:
         run: dotnet restore AccountingSystem.App/AccountingSystem.App.csproj
 
       - name: Install Inno Setup
-        shell: powershell
+        shell: pwsh
         run: |
           choco install innosetup -y
           $env:Path += ";C:\Program Files (x86)\Inno Setup 6"
@@ -38,7 +43,7 @@ jobs:
         run: dotnet build AccountingSystem.sln -c Release --no-restore
 
       - name: Publish and build installer
-        shell: powershell
+        shell: pwsh
         run: |
           Set-StrictMode -Version Latest
           Write-Host "Running build-installer.ps1..."
@@ -48,7 +53,7 @@ jobs:
 
       - name: Code sign published binaries and installer
         if: ${{ env.SIGN_PFX != '' && env.SIGN_PASSWORD != '' }}
-        shell: powershell
+        shell: pwsh
         run: |
           Set-StrictMode -Version Latest
           Write-Host "Preparing certificate file..."
