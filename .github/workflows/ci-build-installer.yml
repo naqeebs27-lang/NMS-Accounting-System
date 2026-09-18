@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-and-package:
-    runs-on: windows-latest   # 👈 GitHub hosted runner (online)
+    runs-on: windows-latest   # 👈 GitHub hosted runner
     timeout-minutes: 60
     env:
       SIGN_PFX: ${{ secrets.SIGN_PFX }}
@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24'   # 👈 explicitly use Node.js 24
 
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
@@ -82,3 +82,30 @@ jobs:
           }
 
           # Sign installer
+          $installerDir = Join-Path $env:GITHUB_WORKSPACE "installer"
+          if (Test-Path $installerDir) {
+            Get-ChildItem $installerDir -Recurse -Include *.exe | ForEach-Object {
+              Write-Host "Signing installer: $($_.FullName)"
+              & $signtool sign /fd SHA256 /f $pfxPath /p $env:SIGN_PASSWORD /tr $timestamp /td SHA256 $_.FullName
+              if ($LASTEXITCODE -ne 0) { throw "Code signing failed for $($_.FullName)" }
+            }
+          } else {
+            Write-Warning "Installer directory not found: $installerDir"
+          }
+
+          # Remove certificate from runner
+          if (Test-Path $pfxPath) { Remove-Item $pfxPath -Force }
+
+      - name: Upload publish output
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-win-x64
+          path: publish/win-x64/**
+          if-no-files-found: error
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: NaqeebsAccounting-installer
+          path: installer/**
+          if-no-files-found: error
