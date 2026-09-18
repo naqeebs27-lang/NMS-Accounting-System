@@ -9,11 +9,12 @@ on:
 
 jobs:
   build-and-package:
-    runs-on: windows-latest   # 👈 GitHub hosted runner
+    runs-on: windows-latest   # 👈 GitHub hosted runner (online)
     timeout-minutes: 60
     env:
       SIGN_PFX: ${{ secrets.SIGN_PFX }}
       SIGN_PASSWORD: ${{ secrets.SIGN_PASSWORD }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # 👈 force all actions to Node 24
 
     steps:
       - name: Checkout repository
