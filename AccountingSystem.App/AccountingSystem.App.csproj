@@ -20,9 +20,11 @@
     <!-- Support both NMS_logo.png and nms.png filenames if present -->
     <Content Include="Resources\NMS_logo.png" Condition="Exists('Resources\\NMS_logo.png')">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </Content>
     <Content Include="Resources\nms.png" Condition="Exists('Resources\\nms.png')">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </Content>
   </ItemGroup>
 

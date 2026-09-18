@@ -17,6 +17,27 @@ if ($LASTEXITCODE -ne 0) {
 	exit 1
 }
 
+# Ensure Resources folder and logo files are copied to the publish output so the installer includes them
+$projectRoot = Split-Path -Path $ProjectPath -Parent
+$resourcesDir = Join-Path -Path $projectRoot -ChildPath "Resources"
+if (Test-Path $resourcesDir) {
+	$targetResources = Join-Path -Path $publishDir -ChildPath "Resources"
+	if (-not (Test-Path $targetResources)) {
+		New-Item -ItemType Directory -Path $targetResources | Out-Null
+	}
+
+	$logos = @("nms.png", "NMS_logo.png")
+	foreach ($logo in $logos) {
+		$src = Join-Path -Path $resourcesDir -ChildPath $logo
+		if (Test-Path $src) {
+			Copy-Item -Path $src -Destination $targetResources -Force
+			Write-Host "Copied resource $logo to publish Resources folder"
+		}
+	}
+} else {
+	Write-Host "No Resources folder found at $resourcesDir"
+}
+
 # Ensure installer directory exists
 if (-not (Test-Path $installerDir)) {
 	New-Item -ItemType Directory -Path $installerDir | Out-Null
