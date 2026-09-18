@@ -9,77 +9,98 @@ on:
 
 jobs:
   build-and-package:
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows, x64]   # 👈 targets your NMS runner
     timeout-minutes: 60
+    env:
+      SIGN_PFX: ${{ secrets.SIGN_PFX }}
+      SIGN_PASSWORD: ${{ secrets.SIGN_PASSWORD }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
       - name: Restore NuGet packages
         run: dotnet restore AccountingSystem.App/AccountingSystem.App.csproj
 
-      - name: Install Inno Setup (Chocolatey)
+      - name: Install Inno Setup
+        shell: powershell
         run: |
           choco install innosetup -y
-          refreshenv
+          $env:Path += ";C:\Program Files (x86)\Inno Setup 6"
+          Write-Host "Inno Setup installed."
 
       - name: Build solution
-        run: dotnet build AccountingSystem.sln -c Release
+        run: dotnet build AccountingSystem.sln -c Release --no-restore
 
       - name: Publish and build installer
         shell: powershell
         run: |
           Set-StrictMode -Version Latest
           Write-Host "Running build-installer.ps1..."
-          .\build-installer.ps1 -Configuration Release -Runtime win-x64
+          .\build-installer.ps1 `
+            -Configuration Release `
+            -Runtime win-x64
 
-      - name: Code sign published binaries and installer (optional)
-        if: ${{ secrets.SIGN_PFX != '' }}
+      - name: Code sign published binaries and installer
+        if: ${{ env.SIGN_PFX != '' && env.SIGN_PASSWORD != '' }}
         shell: powershell
         run: |
           Set-StrictMode -Version Latest
-          Write-Host "Preparing certificate file from SIGN_PFX secret..."
-          $pfxBytes = [System.Convert]::FromBase64String("${{ secrets.SIGN_PFX }}")
-          $pfxPath = "cert.pfx"
+          Write-Host "Preparing certificate file..."
+          $pfxBytes = [System.Convert]::FromBase64String($env:SIGN_PFX)
+          $pfxPath = Join-Path $env:GITHUB_WORKSPACE "cert.pfx"
           [System.IO.File]::WriteAllBytes($pfxPath, $pfxBytes)
 
-          # Find signtool
-          $signtool = (Get-ChildItem 'C:\Program Files (x86)\Windows Kits' -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
-          if (-not $signtool) { $signtool = "signtool.exe" }
+          Write-Host "Finding signtool..."
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits' -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $signtool) { $signtool = Get-Command signtool.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source }
+          if (-not $signtool) { throw "signtool.exe could not be found." }
+          Write-Host "Using signtool: $signtool"
 
-          $timestamp = 'http://timestamp.digicert.com'
+          $timestamp = "http://timestamp.digicert.com"
 
-          # Sign published executables
-          $publishDir = "$env:GITHUB_WORKSPACE\publish\win-x64"
+          # Sign published application EXEs
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE "publish\win-x64"
           if (Test-Path $publishDir) {
-              Get-ChildItem $publishDir -Recurse -Include *.exe | ForEach-Object {
-                  Write-Host "Signing published file: $($_.FullName)"
-                  & $signtool sign /fd SHA256 /f $pfxPath /p "${{ secrets.SIGN_PASSWORD }}" /tr $timestamp /td SHA256 $_.FullName
-              }
-          } else { Write-Warning "Publish directory not found: $publishDir" }
+            Get-ChildItem $publishDir -Recurse -Include *.exe | ForEach-Object {
+              Write-Host "Signing: $($_.FullName)"
+              & $signtool sign /fd SHA256 /f $pfxPath /p $env:SIGN_PASSWORD /tr $timestamp /td SHA256 $_.FullName
+              if ($LASTEXITCODE -ne 0) { throw "Code signing failed for $($_.FullName)" }
+            }
+          } else {
+            Write-Warning "Publish directory not found: $publishDir"
+          }
 
-          # Sign installer exe produced by Inno Setup
-          $installerDir = "$env:GITHUB_WORKSPACE\installer"
+          # Sign installer
+          $installerDir = Join-Path $env:GITHUB_WORKSPACE "installer"
           if (Test-Path $installerDir) {
-              Get-ChildItem $installerDir -Recurse -Include *.exe | ForEach-Object {
-                  Write-Host "Signing installer file: $($_.FullName)"
-                  & $signtool sign /fd SHA256 /f $pfxPath /p "${{ secrets.SIGN_PASSWORD }}" /tr $timestamp /td SHA256 $_.FullName
-              }
-          } else { Write-Warning "Installer directory not found: $installerDir" }
+            Get-ChildItem $installerDir -Recurse -Include *.exe | ForEach-Object {
+              Write-Host "Signing installer: $($_.FullName)"
+              & $signtool sign /fd SHA256 /f $pfxPath /p $env:SIGN_PASSWORD /tr $timestamp /td SHA256 $_.FullName
+              if ($LASTEXITCODE -ne 0) { throw "Code signing failed for $($_.FullName)" }
+            }
+          } else {
+            Write-Warning "Installer directory not found: $installerDir"
+          }
+
+          # Remove certificate from runner
+          if (Test-Path $pfxPath) { Remove-Item $pfxPath -Force }
 
       - name: Upload publish output
         uses: actions/upload-artifact@v4
         with:
           name: publish-win-x64
           path: publish/win-x64/**
+          if-no-files-found: error
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: NaqeebsAccounting-installer
           path: installer/**
+          if-no-files-found: error
