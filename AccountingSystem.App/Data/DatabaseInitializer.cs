@@ -53,11 +53,13 @@ public static class DatabaseInitializer
             RunEmbeddedScript(connection, "ChartOfAccounts.seed.sql");
         }
 
-        var journalCount = ExecuteScalarLong(connection, "SELECT COUNT(*) FROM JournalEntries;");
-        if (journalCount == 0)
+        using (var resetJournalCommand = connection.CreateCommand())
         {
-            RunEmbeddedScript(connection, "JournalEntries.seed.sql");
+            resetJournalCommand.CommandText = "DELETE FROM JournalEntries;";
+            resetJournalCommand.ExecuteNonQuery();
         }
+
+        RunEmbeddedScript(connection, "JournalEntries.seed.sql");
     }
 
     private static long ExecuteScalarLong(SqliteConnection connection, string sql)
