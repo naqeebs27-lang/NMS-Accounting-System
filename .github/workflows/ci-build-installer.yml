@@ -37,7 +37,9 @@ jobs:
         shell: pwsh
         run: |
           choco install innosetup -y
-          $env:Path += ";C:\Program Files (x86)\Inno Setup 6"
+          $innoPath = "C:\Program Files (x86)\Inno Setup 6"
+          $env:Path += ";$innoPath"
+          $innoPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           Write-Host "Inno Setup installed."
 
       - name: Build solution

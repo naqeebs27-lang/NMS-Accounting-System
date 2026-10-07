@@ -43,8 +43,15 @@ if (-not (Test-Path $installerDir)) {
 	New-Item -ItemType Directory -Path $installerDir | Out-Null
 }
 
-# Check for Inno Setup compiler (ISCC.exe)
+# Check for Inno Setup compiler (ISCC.exe). GitHub Actions steps do not share
+# process-local PATH changes, so also check the standard installation path.
 $iscc = Get-Command iscc.exe -ErrorAction SilentlyContinue
+if ($null -eq $iscc) {
+	$standardIsccPath = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+	if (Test-Path $standardIsccPath) {
+		$iscc = Get-Item $standardIsccPath
+	}
+}
 if ($null -eq $iscc) {
 	Write-Warning "Inno Setup compiler (ISCC.exe) was not found in PATH."
 	Write-Host "Download and install Inno Setup: https://jrsoftware.org/isinfo.php"

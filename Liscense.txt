@@ -1,0 +1,154 @@
+END USER LICENSE AGREEMENT (EULA)
+Naqeebs Accounting System
+
+Effective Date: 07-October-2026
+ Software: Naqeebs Accounting System
+ Developer/Provider: Naqeebs Multi Services, Rawalpindi, Pakistan
+
+1. Agreement
+
+This End User License Agreement governs the installation and use of Naqeebs Accounting System ("Software").
+
+By downloading, installing, copying, accessing, or using the Software, the user agrees to comply with the terms of this Agreement.
+
+If the user does not agree with these terms, the user should not install or use the Software.
+
+2. Free Use
+
+Naqeebs Accounting System is provided as free software. No purchase fee is required to install and use the Software unless a separate paid service, customization, support service, hosted service, or other commercial offering is expressly provided.
+
+Users may use the Software for personal or business accounting purposes subject to this Agreement and any open-source license distributed with the Software.
+
+3. Open-Source License
+
+Where the source code of Naqeebs Accounting System is released under a separate open-source license, use, copying, modification, redistribution, and other rights relating to the source code shall be governed by that open-source license.
+
+If there is any conflict between this EULA and the applicable open-source license concerning rights granted under that license, the terms of the applicable open-source license shall prevail to the extent of the conflict.
+
+4. Permitted Use
+
+Subject to the applicable open-source license, users may:
+
+Install and use the Software on compatible computers.
+Use the Software for personal, educational, professional, or business purposes.
+Maintain backup copies of the Software and user-generated accounting data.
+Inspect or modify source code where such rights are granted by the applicable open-source license.
+Redistribute the Software where permitted by the applicable open-source license.
+5. Prohibited Use
+
+Users must not:
+
+Use the Software for unlawful or fraudulent activities.
+Misrepresent themselves as the original developer or owner of Naqeebs Accounting System.
+Remove copyright, license, attribution, or other legal notices where their preservation is required by the applicable license.
+Use the name, logo, trademarks, or branding of Naqeebs Accounting System or Naqeebs Multi Services in a way that falsely suggests authorization, partnership, endorsement, or official status.
+Circumvent security functionality incorporated into the Software.
+6. User Data and Backups
+
+The user is responsible for maintaining appropriate backups of accounting records and other important data.
+
+Users should maintain independent and regularly updated backups, particularly before upgrading, modifying, reinstalling, or transferring the Software.
+
+Naqeebs Multi Services does not guarantee that data can be recovered following hardware failure, software failure, corruption, accidental deletion, malware, operating system failure, or other data-loss events.
+
+7. Accounting and Financial Information
+
+Naqeebs Accounting System is a software tool intended to assist users in recording, organizing, processing, and reviewing accounting information.
+
+The Software is not a substitute for professional accounting, taxation, legal, investment, or financial advice.
+
+Users are responsible for checking the accuracy of reports, calculations, balances, tax information, financial statements, and other information generated or maintained using the Software.
+
+8. User Responsibility
+
+The user remains responsible for:
+
+Accuracy and completeness of information entered into the Software.
+Proper configuration and operation of the Software.
+Protection of usernames, passwords, databases, backups, and computers.
+Compliance with applicable accounting, taxation, record-keeping, privacy, and other legal requirements.
+Reviewing financial reports and records before relying upon them for business, regulatory, taxation, or other purposes.
+9. No Warranty
+
+To the maximum extent permitted by applicable law, the Software is provided "AS IS" and "AS AVAILABLE", without warranties or guarantees of any kind, whether express or implied.
+
+Naqeebs Multi Services does not guarantee that the Software will be error-free, uninterrupted, suitable for every accounting requirement, or compatible with every computer, operating system, database, or third-party application.
+
+10. Limitation of Liability
+
+To the maximum extent permitted by applicable law, Naqeebs Multi Services and contributors to the Software shall not be liable for indirect, incidental, special, consequential, or similar losses arising from the installation or use of, or inability to use, the Software.
+
+This includes, where legally permitted, loss of data, loss of profits, business interruption, incorrect accounting records, or decisions made on the basis of information produced using the Software.
+
+Nothing in this Agreement excludes or limits liability that cannot legally be excluded or limited.
+
+11. Third-Party Components
+
+Naqeebs Accounting System may incorporate or interact with third-party libraries, frameworks, databases, services, or other software.
+
+Such components may be subject to their own copyright notices, licenses, privacy terms, or terms of use. Users must comply with applicable third-party terms.
+
+12. Updates and Changes
+
+New versions, bug fixes, improvements, and other updates may be released from time to time.
+
+The availability of the Software free of charge does not create an obligation upon Naqeebs Multi Services to provide updates, maintenance, technical support, customization, data recovery, or continued development.
+
+13. Support and Paid Services
+
+The Software may be free even if optional services relating to the Software are offered for a fee.
+
+Naqeebs Multi Services may separately charge for services such as installation, configuration, customization, training, technical support, database migration, data recovery, cloud services, or other professional services.
+
+Purchasing such services does not alter the open-source licensing rights applicable to the Software itself.
+
+14. Intellectual Property and Branding
+
+Copyright, trademarks, logos, trade names, documentation, branding, and other intellectual property associated with Naqeebs Accounting System remain the property of their respective owners.
+
+An open-source license may grant rights to source code without granting rights to use the Naqeebs, Naqeebs Multi Services, or Naqeebs Accounting System names, logos, or trademarks for misleading or unauthorized commercial representations.
+
+15. Termination
+
+Rights granted under this Agreement may terminate where a user materially violates these terms, subject to any rights or reinstatement provisions contained in the applicable open-source license.
+
+Termination does not remove rights that an applicable open-source license expressly provides independently of this Agreement.
+
+16. Changes to this Agreement
+
+Future versions of Naqeebs Accounting System may be distributed with an updated version of this Agreement.
+
+An updated Agreement will apply according to the terms under which the relevant version of the Software is distributed and applicable law.
+
+17. Governing Law
+
+This Agreement shall be governed by the applicable laws of Pakistan, subject to any mandatory legal rights or requirements that cannot lawfully be excluded.
+
+18. Entire Agreement
+
+This Agreement, together with the applicable open-source license and any third-party licenses distributed with the Software, constitutes the terms governing use of the Software, except where separate written terms expressly apply.
+
+19. Acceptance
+
+By installing or using Naqeebs Accounting System, the user acknowledges having read and understood this Agreement and agrees to its applicable terms.
+
+Naqeebs Accounting System
+ Naqeebs Multi Services
+ Rawalpindi, Pakistan
+
+Copyright © [Year] Naqeebs Multi Services.
+ Open-source components remain subject to their respective licenses.
+
+Important recommendation before adding this to your software
+
+Because you specifically want “open free software,” I recommend that you first decide which meaning you want:
+
+Freeware: Users can use it for free, but you retain control over modification and redistribution.
+Open source with MIT License: Users can use, modify, distribute, and commercially reuse the source subject to the license conditions.
+Open source with GPL: Users can modify and redistribute it, but distributed derivative works generally remain subject to GPL requirements.
+
+If your intention is “anyone can freely use my Naqeebs Accounting System, including businesses, and the source code will be available on GitHub”, I can next prepare a coordinated LICENSE + EULA + GitHub README copyright section so the three don't contradict one another.
+
+Drafting approach
+
+I deliberately separated free use, open-source rights, branding, warranty, data backup responsibility, and optional paid support. This is important because making the accounting software free does not necessarily mean every service, trademark, or piece of branding must also be unrestricted.
