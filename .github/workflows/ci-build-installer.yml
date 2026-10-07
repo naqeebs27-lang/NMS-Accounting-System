@@ -2,113 +2,139 @@ name: CI - Build and Package Installer
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+
   workflow_dispatch:
 
 jobs:
   build-and-package:
-    runs-on: windows-latest   # 👈 GitHub hosted runner (online)
+    runs-on: windows-latest
     timeout-minutes: 60
+
     env:
       SIGN_PFX: ${{ secrets.SIGN_PFX }}
       SIGN_PASSWORD: ${{ secrets.SIGN_PASSWORD }}
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # 👈 force all actions to Node 24
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # ============================================================
+      # Checkout source code
+      # ============================================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+
+      # ============================================================
+      # Setup Node.js 24
+      # ============================================================
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v7
         with:
-          node-version: '24'   # 👈 explicitly use Node.js 24
+          node-version: '24'
+
+      - name: Verify Node.js
+        shell: pwsh
+        run: |
+          Write-Host "Node.js version:"
+          node --version
+
+          Write-Host "NPM version:"
+          npm --version
+
+
+      # ============================================================
+      # Setup .NET 8
+      # ============================================================
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
+      - name: Verify .NET
+        shell: pwsh
+        run: |
+          Write-Host ".NET SDK:"
+          dotnet --version
+
+          Write-Host ".NET SDK information:"
+          dotnet --info
+
+
+      # ============================================================
+      # Restore
+      # ============================================================
+
       - name: Restore NuGet packages
         run: dotnet restore AccountingSystem.App/AccountingSystem.App.csproj
+
+
+      # ============================================================
+      # Install Inno Setup
+      # ============================================================
 
       - name: Install Inno Setup
         shell: pwsh
         run: |
           choco install innosetup -y
+
           $innoPath = "C:\Program Files (x86)\Inno Setup 6"
+
           $env:Path += ";$innoPath"
-          $innoPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+          $innoPath | Out-File `
+            -FilePath $env:GITHUB_PATH `
+            -Encoding utf8 `
+            -Append
+
           Write-Host "Inno Setup installed."
+
+
+      # ============================================================
+      # Build solution
+      # ============================================================
 
       - name: Build solution
         run: dotnet build AccountingSystem.sln -c Release --no-restore
+
+
+      # ============================================================
+      # Publish application and create installer
+      # ============================================================
 
       - name: Publish and build installer
         shell: pwsh
         run: |
           Set-StrictMode -Version Latest
+
           Write-Host "Running build-installer.ps1..."
+
           .\build-installer.ps1 `
             -Configuration Release `
             -Runtime win-x64
+
+
+      # ============================================================
+      # Code signing
+      # Only runs when signing secrets exist
+      # ============================================================
 
       - name: Code sign published binaries and installer
         if: ${{ env.SIGN_PFX != '' && env.SIGN_PASSWORD != '' }}
         shell: pwsh
         run: |
           Set-StrictMode -Version Latest
+
           Write-Host "Preparing certificate file..."
-          $pfxBytes = [System.Convert]::FromBase64String($env:SIGN_PFX)
-          $pfxPath = Join-Path $env:GITHUB_WORKSPACE "cert.pfx"
-          [System.IO.File]::WriteAllBytes($pfxPath, $pfxBytes)
 
-          Write-Host "Finding signtool..."
-          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits' -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-          if (-not $signtool) { $signtool = Get-Command signtool.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source }
-          if (-not $signtool) { throw "signtool.exe could not be found." }
-          Write-Host "Using signtool: $signtool"
-
-          $timestamp = "http://timestamp.digicert.com"
-
-          # Sign published application EXEs
-          $publishDir = Join-Path $env:GITHUB_WORKSPACE "publish\win-x64"
-          if (Test-Path $publishDir) {
-            Get-ChildItem $publishDir -Recurse -Include *.exe | ForEach-Object {
-              Write-Host "Signing: $($_.FullName)"
-              & $signtool sign /fd SHA256 /f $pfxPath /p $env:SIGN_PASSWORD /tr $timestamp /td SHA256 $_.FullName
-              if ($LASTEXITCODE -ne 0) { throw "Code signing failed for $($_.FullName)" }
-            }
-          } else {
-            Write-Warning "Publish directory not found: $publishDir"
-          }
-
-          # Sign installer
-          $installerDir = Join-Path $env:GITHUB_WORKSPACE "installer"
-          if (Test-Path $installerDir) {
-            Get-ChildItem $installerDir -Recurse -Include *.exe | ForEach-Object {
-              Write-Host "Signing installer: $($_.FullName)"
-              & $signtool sign /fd SHA256 /f $pfxPath /p $env:SIGN_PASSWORD /tr $timestamp /td SHA256 $_.FullName
-              if ($LASTEXITCODE -ne 0) { throw "Code signing failed for $($_.FullName)" }
-            }
-          } else {
-            Write-Warning "Installer directory not found: $installerDir"
-          }
-
-          # Remove certificate from runner
-          if (Test-Path $pfxPath) { Remove-Item $pfxPath -Force }
-
-      - name: Upload publish output
-        uses: actions/upload-artifact@v4
-        with:
-          name: publish-win-x64
-          path: publish/win-x64/**
-          if-no-files-found: error
-
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: NaqeebsAccounting-installer
-          path: installer/**
-          if-no-files-found: error
+          $pfxBytes = [System.Convert]::FromBase64String(
+            $env:
