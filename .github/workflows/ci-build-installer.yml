@@ -1,292 +1,81 @@
-name: CI - Build and Package Installer
+name: Build and Package Installer
 
 on:
   push:
-    branches:
-      - main
-      - master
-
+    branches: [main, master]
   pull_request:
-    branches:
-      - main
-      - master
-
+    branches: [main, master]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build-and-package:
     runs-on: windows-latest
     timeout-minutes: 60
-
     env:
-      SIGN_PFX: ${{ secrets.SIGN_PFX }}
-      SIGN_PASSWORD: ${{ secrets.SIGN_PASSWORD }}
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-
-      # ============================================================
-      # 1. CHECKOUT
-      # ============================================================
-
       - name: Checkout repository
-        uses: actions/checkout@v7
-
-
-      # ============================================================
-      # 2. NODE.JS 24
-      # ============================================================
+        uses: actions/checkout@v4
 
       - name: Setup Node.js 24
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
-          package-manager-cache: false
+          node-version: '24.x'
 
-      - name: Verify Node.js
-        shell: pwsh
-        run: |
-          Write-Host "Node.js version:"
-          node --version
+      - name: Show Node.js version
+        run: node --version
 
-          Write-Host "NPM version:"
-          npm --version
-
-
-      # ============================================================
-      # 3. .NET 8
-      # ============================================================
-
-      - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v6
+      - name: Setup .NET SDK 8
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Verify .NET
-        shell: pwsh
-        run: |
-          Write-Host ".NET SDK version:"
-          dotnet --version
-
-          Write-Host ".NET information:"
-          dotnet --info
-
-
-      # ============================================================
-      # 4. RESTORE
-      # ============================================================
-
       - name: Restore NuGet packages
-        run: dotnet restore AccountingSystem.sln
+        run: dotnet restore AccountingSystem.App/AccountingSystem.App.csproj
 
-
-      # ============================================================
-      # 5. INSTALL INNO SETUP
-      # ============================================================
+      - name: Build solution
+        run: dotnet build AccountingSystem.sln --configuration Release --no-restore
 
       - name: Install Inno Setup
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-
-          choco install innosetup -y
-
-          $innoPath = "C:\Program Files (x86)\Inno Setup 6"
-
-          if (-not (Test-Path $innoPath)) {
-              throw "Inno Setup directory not found: $innoPath"
+          choco install innosetup --no-progress --yes
+          $innoPath = 'C:\Program Files (x86)\Inno Setup 6'
+          if (-not (Test-Path (Join-Path $innoPath 'ISCC.exe'))) {
+            throw 'Inno Setup compiler was not found.'
           }
+          $innoPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-          $innoPath | Out-File `
-            -FilePath $env:GITHUB_PATH `
-            -Encoding utf8 `
-            -Append
-
-          Write-Host "Inno Setup installed successfully."
-          Write-Host "Path: $innoPath"
-
-
-      # ============================================================
-      # 6. BUILD SOLUTION
-      # ============================================================
-
-      - name: Build solution
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-
-          Write-Host "Building AccountingSystem.sln..."
-
-          dotnet build AccountingSystem.sln `
-            -c Release `
-            --no-restore
-
-          if ($LASTEXITCODE -ne 0) {
-              throw "Solution build failed."
-          }
-
-          Write-Host "Solution build completed successfully."
-
-
-      # ============================================================
-      # 7. BUILD INSTALLER
-      # ============================================================
-
-      - name: Publish and build installer
+      - name: Build installer
         shell: pwsh
         run: |
           Set-StrictMode -Version Latest
-          $ErrorActionPreference = "Stop"
+          $ErrorActionPreference = 'Stop'
+          & .\build-installer.ps1 -Configuration Release -Runtime win-x64
 
-          Write-Host "Checking build-installer.ps1..."
-
-          if (-not (Test-Path ".\build-installer.ps1")) {
-              throw "build-installer.ps1 was not found in repository root."
-          }
-
-          Write-Host "Running build-installer.ps1..."
-
-          .\build-installer.ps1 `
-            -Configuration Release `
-            -Runtime win-x64
-
-          Write-Host "build-installer.ps1 completed."
-
-
-      # ============================================================
-      # 8. VERIFY PUBLISH DIRECTORY
-      # ============================================================
-
-      - name: Verify published application
+      - name: Verify publish output
         shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
+          $publishPath = Join-Path $env:GITHUB_WORKSPACE 'publish\win-x64'
+          $installerPath = Join-Path $env:GITHUB_WORKSPACE 'installer\NaqeebsAccountingInstaller.exe'
+          if (-not (Test-Path $publishPath)) { throw "Publish output not found: $publishPath" }
+          if (-not (Test-Path $installerPath)) { throw "Installer not found: $installerPath" }
+          Get-ChildItem $publishPath -Recurse
 
-          $publishDir = Join-Path `
-            $env:GITHUB_WORKSPACE `
-            "publish\win-x64"
+      - name: Upload publish output
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-win-x64
+          path: publish/win-x64/**
+          if-no-files-found: error
 
-          Write-Host "Checking publish directory:"
-          Write-Host $publishDir
-
-          if (-not (Test-Path $publishDir)) {
-              throw "Publish directory was not created: $publishDir"
-          }
-
-          Write-Host ""
-          Write-Host "Published files:"
-          Write-Host "========================================"
-
-          Get-ChildItem `
-            -Path $publishDir `
-            -Recurse `
-            -File |
-            Select-Object FullName, Length |
-            Format-Table -AutoSize
-
-
-      # ============================================================
-      # 9. VERIFY INSTALLER
-      # ============================================================
-
-      - name: Verify installer
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-
-          $installerDir = Join-Path `
-            $env:GITHUB_WORKSPACE `
-            "installer"
-
-          Write-Host ""
-          Write-Host "========================================"
-          Write-Host "CHECKING INSTALLER OUTPUT"
-          Write-Host "========================================"
-          Write-Host ""
-
-          Write-Host "Expected installer directory:"
-          Write-Host $installerDir
-
-          if (-not (Test-Path $installerDir)) {
-              throw "Installer directory was not created: $installerDir"
-          }
-
-          Write-Host ""
-          Write-Host "Contents of installer directory:"
-          Write-Host "========================================"
-
-          Get-ChildItem `
-            -Path $installerDir `
-            -Recurse `
-            -File |
-            Select-Object FullName, Length |
-            Format-Table -AutoSize
-
-          $installerExe = Get-ChildItem `
-            -Path $installerDir `
-            -Recurse `
-            -Filter *.exe `
-            -File `
-            -ErrorAction SilentlyContinue
-
-          if (-not $installerExe) {
-              throw "Installer directory exists, but no installer EXE was found."
-          }
-
-          Write-Host ""
-          Write-Host "========================================"
-          Write-Host "INSTALLER FOUND"
-          Write-Host "========================================"
-
-          $installerExe |
-            Select-Object FullName, Length |
-            Format-Table -AutoSize
-
-
-      # ============================================================
-      # 10. OPTIONAL CODE SIGNING
-      # ============================================================
-
-      - name: Code sign published binaries and installer
-        if: ${{ env.SIGN_PFX != '' && env.SIGN_PASSWORD != '' }}
-        shell: pwsh
-        run: |
-          Set-StrictMode -Version Latest
-          $ErrorActionPreference = "Stop"
-
-          Write-Host "Preparing signing certificate..."
-
-          $pfxBytes = [System.Convert]::FromBase64String(
-              $env:SIGN_PFX
-          )
-
-          $pfxPath = Join-Path `
-              $env:GITHUB_WORKSPACE `
-              "cert.pfx"
-
-          [System.IO.File]::WriteAllBytes(
-              $pfxPath,
-              $pfxBytes
-          )
-
-          Write-Host "Finding signtool.exe..."
-
-          $signtool = Get-ChildItem `
-              "C:\Program Files (x86)\Windows Kits" `
-              -Recurse `
-              -Filter signtool.exe `
-              -ErrorAction SilentlyContinue |
-              Select-Object `
-              -First 1 `
-              -ExpandProperty FullName
-
-          if (-not $signtool) {
-              $cmd = Get-Command `
-                  signtool.exe `
-                  -ErrorAction SilentlyContinue
-
-              if ($cmd) {
-                  $signtool = $cmd.Source
-              }
-          }
-
-      
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: NaqeebsAccounting-installer
+          path: installer/NaqeebsAccountingInstaller.exe
+          if-no-files-found: error
