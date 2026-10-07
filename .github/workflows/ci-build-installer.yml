@@ -25,7 +25,7 @@ jobs:
     steps:
 
       # ============================================================
-      # 1. Checkout repository
+      # 1. CHECKOUT
       # ============================================================
 
       - name: Checkout repository
@@ -33,7 +33,7 @@ jobs:
 
 
       # ============================================================
-      # 2. Setup Node.js 24
+      # 2. NODE.JS 24
       # ============================================================
 
       - name: Setup Node.js 24
@@ -53,7 +53,7 @@ jobs:
 
 
       # ============================================================
-      # 3. Setup .NET 8
+      # 3. .NET 8
       # ============================================================
 
       - name: Setup .NET 8 SDK
@@ -72,7 +72,7 @@ jobs:
 
 
       # ============================================================
-      # 4. Restore NuGet packages
+      # 4. RESTORE
       # ============================================================
 
       - name: Restore NuGet packages
@@ -80,18 +80,20 @@ jobs:
 
 
       # ============================================================
-      # 5. Install Inno Setup
+      # 5. INSTALL INNO SETUP
       # ============================================================
 
       - name: Install Inno Setup
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
+
           choco install innosetup -y
 
           $innoPath = "C:\Program Files (x86)\Inno Setup 6"
 
           if (-not (Test-Path $innoPath)) {
-              throw "Inno Setup installation directory not found: $innoPath"
+              throw "Inno Setup directory not found: $innoPath"
           }
 
           $innoPath | Out-File `
@@ -100,9 +102,191 @@ jobs:
             -Append
 
           Write-Host "Inno Setup installed successfully."
-          Write-Host "Inno Setup path: $innoPath"
+          Write-Host "Path: $innoPath"
 
 
       # ============================================================
-      # 6. Build solution
-      # =====
+      # 6. BUILD SOLUTION
+      # ============================================================
+
+      - name: Build solution
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          Write-Host "Building AccountingSystem.sln..."
+
+          dotnet build AccountingSystem.sln `
+            -c Release `
+            --no-restore
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Solution build failed."
+          }
+
+          Write-Host "Solution build completed successfully."
+
+
+      # ============================================================
+      # 7. BUILD INSTALLER
+      # ============================================================
+
+      - name: Publish and build installer
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+
+          Write-Host "Checking build-installer.ps1..."
+
+          if (-not (Test-Path ".\build-installer.ps1")) {
+              throw "build-installer.ps1 was not found in repository root."
+          }
+
+          Write-Host "Running build-installer.ps1..."
+
+          .\build-installer.ps1 `
+            -Configuration Release `
+            -Runtime win-x64
+
+          Write-Host "build-installer.ps1 completed."
+
+
+      # ============================================================
+      # 8. VERIFY PUBLISH DIRECTORY
+      # ============================================================
+
+      - name: Verify published application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $publishDir = Join-Path `
+            $env:GITHUB_WORKSPACE `
+            "publish\win-x64"
+
+          Write-Host "Checking publish directory:"
+          Write-Host $publishDir
+
+          if (-not (Test-Path $publishDir)) {
+              throw "Publish directory was not created: $publishDir"
+          }
+
+          Write-Host ""
+          Write-Host "Published files:"
+          Write-Host "========================================"
+
+          Get-ChildItem `
+            -Path $publishDir `
+            -Recurse `
+            -File |
+            Select-Object FullName, Length |
+            Format-Table -AutoSize
+
+
+      # ============================================================
+      # 9. VERIFY INSTALLER
+      # ============================================================
+
+      - name: Verify installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $installerDir = Join-Path `
+            $env:GITHUB_WORKSPACE `
+            "installer"
+
+          Write-Host ""
+          Write-Host "========================================"
+          Write-Host "CHECKING INSTALLER OUTPUT"
+          Write-Host "========================================"
+          Write-Host ""
+
+          Write-Host "Expected installer directory:"
+          Write-Host $installerDir
+
+          if (-not (Test-Path $installerDir)) {
+              throw "Installer directory was not created: $installerDir"
+          }
+
+          Write-Host ""
+          Write-Host "Contents of installer directory:"
+          Write-Host "========================================"
+
+          Get-ChildItem `
+            -Path $installerDir `
+            -Recurse `
+            -File |
+            Select-Object FullName, Length |
+            Format-Table -AutoSize
+
+          $installerExe = Get-ChildItem `
+            -Path $installerDir `
+            -Recurse `
+            -Filter *.exe `
+            -File `
+            -ErrorAction SilentlyContinue
+
+          if (-not $installerExe) {
+              throw "Installer directory exists, but no installer EXE was found."
+          }
+
+          Write-Host ""
+          Write-Host "========================================"
+          Write-Host "INSTALLER FOUND"
+          Write-Host "========================================"
+
+          $installerExe |
+            Select-Object FullName, Length |
+            Format-Table -AutoSize
+
+
+      # ============================================================
+      # 10. OPTIONAL CODE SIGNING
+      # ============================================================
+
+      - name: Code sign published binaries and installer
+        if: ${{ env.SIGN_PFX != '' && env.SIGN_PASSWORD != '' }}
+        shell: pwsh
+        run: |
+          Set-StrictMode -Version Latest
+          $ErrorActionPreference = "Stop"
+
+          Write-Host "Preparing signing certificate..."
+
+          $pfxBytes = [System.Convert]::FromBase64String(
+              $env:SIGN_PFX
+          )
+
+          $pfxPath = Join-Path `
+              $env:GITHUB_WORKSPACE `
+              "cert.pfx"
+
+          [System.IO.File]::WriteAllBytes(
+              $pfxPath,
+              $pfxBytes
+          )
+
+          Write-Host "Finding signtool.exe..."
+
+          $signtool = Get-ChildItem `
+              "C:\Program Files (x86)\Windows Kits" `
+              -Recurse `
+              -Filter signtool.exe `
+              -ErrorAction SilentlyContinue |
+              Select-Object `
+              -First 1 `
+              -ExpandProperty FullName
+
+          if (-not $signtool) {
+              $cmd = Get-Command `
+                  signtool.exe `
+                  -ErrorAction SilentlyContinue
+
+              if ($cmd) {
+                  $signtool = $cmd.Source
+              }
+          }
+
+      
