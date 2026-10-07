@@ -29,6 +29,32 @@ public class LedgerViewModel : ReportViewModelBase
 {
     public ObservableCollection<LedgerRow> Rows { get; } = new();
 
+    private readonly JournalService _journalService = new();
+
+    private LedgerRow? _selectedRow;
+    public LedgerRow? SelectedRow
+    {
+        get => _selectedRow;
+        set
+        {
+            if (SetField(ref _selectedRow, value))
+            {
+                LoadDetails();
+            }
+        }
+    }
+
+    public ObservableCollection<JournalEntry> Details { get; } = new();
+
+    private decimal _detailsTotalDebit;
+    public decimal DetailsTotalDebit { get => _detailsTotalDebit; set => SetField(ref _detailsTotalDebit, value); }
+
+    private decimal _detailsTotalCredit;
+    public decimal DetailsTotalCredit { get => _detailsTotalCredit; set => SetField(ref _detailsTotalCredit, value); }
+
+    private decimal _detailsClosingBalance;
+    public decimal DetailsClosingBalance { get => _detailsClosingBalance; set => SetField(ref _detailsClosingBalance, value); }
+
     public LedgerViewModel() => Refresh();
 
     public override void Refresh()
@@ -38,6 +64,20 @@ public class LedgerViewModel : ReportViewModelBase
         {
             Rows.Add(row);
         }
+        LoadDetails();
+    }
+
+    private void LoadDetails()
+    {
+        Details.Clear();
+        if (SelectedRow is null) return;
+        var entries = _journalService.GetFilteredEntries(FromDate, ToDate, SelectedRow.AccountId);
+        foreach (var e in entries)
+            Details.Add(e);
+        // compute totals for the details view
+        DetailsTotalDebit = Details.Sum(d => d.Debit);
+        DetailsTotalCredit = Details.Sum(d => d.Credit);
+        DetailsClosingBalance = DetailsTotalDebit - DetailsTotalCredit;
     }
 }
 

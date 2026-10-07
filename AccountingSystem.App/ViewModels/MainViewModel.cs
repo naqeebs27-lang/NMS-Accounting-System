@@ -15,6 +15,7 @@ public class MainViewModel : ViewModelBase
     public TrialBalanceViewModel TrialBalance { get; } = new();
     public IncomeStatementViewModel IncomeStatement { get; } = new();
     public BalanceSheetViewModel BalanceSheet { get; } = new();
+    public PettyCashViewModel PettyCash { get; } = new();
 
     // Navigation commands used by the dashboard view
     public RelayCommand NavigateToChartCommand { get; }
@@ -23,6 +24,7 @@ public class MainViewModel : ViewModelBase
     public RelayCommand NavigateToTrialBalanceCommand { get; }
     public RelayCommand NavigateToIncomeStatementCommand { get; }
     public RelayCommand NavigateToBalanceSheetCommand { get; }
+    public RelayCommand NavigateToPettyCashCommand { get; }
 
     private int _selectedTabIndex;
     public int SelectedTabIndex
@@ -40,23 +42,25 @@ public class MainViewModel : ViewModelBase
     private void RefreshReportsIfNeeded()
     {
         // Tabs: 0 = Dashboard, 1 = Chart of Accounts, 2 = Journal, 3 = Ledger,
-        //       4 = Trial Balance, 5 = Income Statement, 6 = Balance Sheet
+        //       4 = Trial Balance, 5 = Income Statement, 6 = Balance Sheet, 7 = Petty Cash
         switch (SelectedTabIndex)
         {
-            case 3: Ledger.Refresh(); break;
-            case 4: TrialBalance.Refresh(); break;
-            case 5: IncomeStatement.Refresh(); break;
-            case 6: BalanceSheet.Refresh(); break;
+            case 4: Ledger.Refresh(); break;
+            case 5: TrialBalance.Refresh(); break;
+            case 6: IncomeStatement.Refresh(); break;
+            case 7: BalanceSheet.Refresh(); break;
         }
     }
 
     public MainViewModel()
     {
+        PettyCash.SetJournalEntriesViewModel(JournalEntries);
         NavigateToChartCommand = new RelayCommand(() => SelectedTabIndex = 1);
         NavigateToJournalCommand = new RelayCommand(() => SelectedTabIndex = 2);
-        NavigateToLedgerCommand = new RelayCommand(() => SelectedTabIndex = 3);
-        NavigateToTrialBalanceCommand = new RelayCommand(() => SelectedTabIndex = 4);
-        NavigateToIncomeStatementCommand = new RelayCommand(() => SelectedTabIndex = 5);
-        NavigateToBalanceSheetCommand = new RelayCommand(() => SelectedTabIndex = 6);
+        NavigateToPettyCashCommand = new RelayCommand(() => SelectedTabIndex = 7);
+        NavigateToLedgerCommand = new RelayCommand(() => SelectedTabIndex = 4);
+        NavigateToTrialBalanceCommand = new RelayCommand(() => SelectedTabIndex = 5);
+        NavigateToIncomeStatementCommand = new RelayCommand(() => SelectedTabIndex = 6);
+        NavigateToBalanceSheetCommand = new RelayCommand(() => SelectedTabIndex = 7);
     }
 }

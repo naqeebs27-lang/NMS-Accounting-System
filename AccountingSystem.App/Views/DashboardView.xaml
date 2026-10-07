@@ -17,13 +17,62 @@
             <TextBlock VerticalAlignment="Center" Text="Naqeebs Accounting" FontSize="24" FontWeight="Bold"/>
         </DockPanel>
 
-        <UniformGrid Grid.Row="1" Columns="3" Rows="2" Margin="0,16,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-            <Button Margin="8" Padding="12" Content="Chart of Accounts" Command="{Binding DataContext.NavigateToChartCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Button Margin="8" Padding="12" Content="Journal Entries" Command="{Binding DataContext.NavigateToJournalCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Button Margin="8" Padding="12" Content="Ledger" Command="{Binding DataContext.NavigateToLedgerCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Button Margin="8" Padding="12" Content="Trial Balance" Command="{Binding DataContext.NavigateToTrialBalanceCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Button Margin="8" Padding="12" Content="Income Statement" Command="{Binding DataContext.NavigateToIncomeStatementCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-            <Button Margin="8" Padding="12" Content="Balance Sheet" Command="{Binding DataContext.NavigateToBalanceSheetCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-        </UniformGrid>
+        <StackPanel Grid.Row="1" Margin="0,16,0,0">
+            <UniformGrid Columns="3" Rows="3" Margin="0,0,0,12" HorizontalAlignment="Stretch">
+                <Button Margin="8" Padding="12" Content="Chart of Accounts" Command="{Binding DataContext.NavigateToChartCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Margin="8" Padding="12" Content="Journal Entries" Command="{Binding DataContext.NavigateToJournalCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Margin="8" Padding="12" Content="Ledger" Command="{Binding DataContext.NavigateToLedgerCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Margin="8" Padding="12" Content="Trial Balance" Command="{Binding DataContext.NavigateToTrialBalanceCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Margin="8" Padding="12" Content="Income Statement" Command="{Binding DataContext.NavigateToIncomeStatementCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Margin="8" Padding="12" Content="Balance Sheet" Command="{Binding DataContext.NavigateToBalanceSheetCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Margin="8" Padding="12" Content="Petty Cash" Command="{Binding DataContext.NavigateToPettyCashCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            </UniformGrid>
+
+            <!-- Date range + Refresh for dashboard balances -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="8,0,0,12">
+                <Label Content="From" VerticalAlignment="Center"/>
+                <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay, Source={x:Static local:DashboardViewLocator.ViewModel}}" Width="130"/>
+                <Label Content="To" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay, Source={x:Static local:DashboardViewLocator.ViewModel}}" Width="130"/>
+                <Button Content="Refresh" Command="{Binding RefreshCommand, Source={x:Static local:DashboardViewLocator.ViewModel}}" Margin="8,0,0,0"/>
+            </StackPanel>
+
+            <!-- Balances summary -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="8,0,0,12">
+                <StackPanel Margin="8">
+                    <TextBlock Text="Banks" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding BankBalance, Source={x:Static local:DashboardViewLocator.ViewModel}, StringFormat=N2}" FontSize="16"/>
+                </StackPanel>
+                <StackPanel Margin="8">
+                    <TextBlock Text="Cash" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CashBalance, Source={x:Static local:DashboardViewLocator.ViewModel}, StringFormat=N2}" FontSize="16"/>
+                </StackPanel>
+                <StackPanel Margin="8">
+                    <TextBlock Text="Petty Cash" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding PettyCashBalance, Source={x:Static local:DashboardViewLocator.ViewModel}, StringFormat=N2}" FontSize="16"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="Generate Monthly Total"
+                                Command="{Binding DataContext.PettyCash.GeneratePettyCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                Margin="0,0,8,0"/>
+                        <Button Content="Post Summary to Journal"
+                                Command="{Binding DataContext.PettyCash.PostPettyCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                    </StackPanel>
+                    <TextBlock Text="Monthly Petty Total:" Margin="0,8,0,0"/>
+                    <TextBlock Text="{Binding DataContext.PettyCash.PettyMonthlyTotal, RelativeSource={RelativeSource AncestorType=Window}, StringFormat=N2}" FontWeight="Bold"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Financial preview -->
+            <GroupBox Header="Financial Preview" Margin="8">
+                <DataGrid ItemsSource="{Binding Preview, Source={x:Static local:DashboardViewLocator.ViewModel}}" AutoGenerateColumns="False" Height="120">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Account" Binding="{Binding AccountName}" Width="*"/>
+                        <DataGridTextColumn Header="Debit" Binding="{Binding SumDebit, StringFormat=N2}" Width="120"/>
+                        <DataGridTextColumn Header="Credit" Binding="{Binding SumCredit, StringFormat=N2}" Width="120"/>
+                        <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=N2}" Width="120"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </GroupBox>
+        </StackPanel>
     </Grid>
 </UserControl>

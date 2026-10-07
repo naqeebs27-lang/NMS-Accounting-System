@@ -25,6 +25,7 @@
             <TabItem Header="Journal Entries">
                 <local:JournalEntryView DataContext="{Binding JournalEntries}"/>
             </TabItem>
+
             <TabItem Header="Ledger">
                 <local:LedgerView DataContext="{Binding Ledger}"/>
             </TabItem>
@@ -36,6 +37,9 @@
             </TabItem>
             <TabItem Header="Balance Sheet">
                 <local:BalanceSheetView DataContext="{Binding BalanceSheet}"/>
+            </TabItem>
+            <TabItem Header="Petty Cash">
+                <local:PettyCashView DataContext="{Binding PettyCash}"/>
             </TabItem>
         </TabControl>
     </DockPanel>

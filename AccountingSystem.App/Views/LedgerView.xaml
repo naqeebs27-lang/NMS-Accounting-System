@@ -4,6 +4,7 @@
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="2*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -15,7 +16,7 @@
             <Button Content="Refresh" Command="{Binding RefreshCommand}"/>
         </StackPanel>
 
-        <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}">
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow, Mode=TwoWay}" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Account ID" Binding="{Binding AccountId}" Width="100"/>
                 <DataGridTextColumn Header="Account" Binding="{Binding AccountName}" Width="*"/>
@@ -24,5 +25,27 @@
                 <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=N2}" Width="140"/>
             </DataGrid.Columns>
         </DataGrid>
+
+        <GroupBox Grid.Row="2" Header="Account Details (select an account above)">
+            <DockPanel>
+                <DataGrid ItemsSource="{Binding Details}" AutoGenerateColumns="False" DockPanel.Dock="Top">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date" Binding="{Binding EntryDate, StringFormat=d}" Width="120"/>
+                        <DataGridTextColumn Header="Voucher" Binding="{Binding VoucherNo}" Width="80"/>
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
+                        <DataGridTextColumn Header="Debit" Binding="{Binding Debit, StringFormat=N2}" Width="120"/>
+                        <DataGridTextColumn Header="Credit" Binding="{Binding Credit, StringFormat=N2}" Width="120"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="8" DockPanel.Dock="Bottom">
+                    <TextBlock Text="Total Debit:" VerticalAlignment="Center" Margin="8,0"/>
+                    <TextBlock Text="{Binding DetailsTotalDebit, StringFormat=N2}" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,16,0"/>
+                    <TextBlock Text="Total Credit:" VerticalAlignment="Center" Margin="8,0"/>
+                    <TextBlock Text="{Binding DetailsTotalCredit, StringFormat=N2}" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,16,0"/>
+                    <TextBlock Text="Closing Balance:" VerticalAlignment="Center" Margin="8,0"/>
+                    <TextBlock Text="{Binding DetailsClosingBalance, StringFormat=N2}" VerticalAlignment="Center" FontWeight="Bold"/>
+                </StackPanel>
+            </DockPanel>
+        </GroupBox>
     </Grid>
 </UserControl>

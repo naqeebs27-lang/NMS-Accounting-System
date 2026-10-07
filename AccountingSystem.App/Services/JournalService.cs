@@ -116,6 +116,30 @@ public class JournalService
         cmd.ExecuteNonQuery();
     }
 
+    public void Update(JournalEntry entry)
+    {
+        using var connection = DbConnectionFactory.CreateConnection();
+        using var cmd = connection.CreateCommand();
+        cmd.CommandText = """
+            UPDATE JournalEntries
+            SET EntryDate = $date,
+                AccountId = $accountId,
+                VoucherNo = $voucherNo,
+                Description = $description,
+                Debit = $debit,
+                Credit = $credit
+            WHERE Id = $id;
+            """;
+        cmd.Parameters.AddWithValue("$date", entry.EntryDate.ToString(DateFormat, CultureInfo.InvariantCulture));
+        cmd.Parameters.AddWithValue("$accountId", entry.AccountId);
+        cmd.Parameters.AddWithValue("$voucherNo", entry.VoucherNo);
+        cmd.Parameters.AddWithValue("$description", entry.Description);
+        cmd.Parameters.AddWithValue("$debit", entry.Debit);
+        cmd.Parameters.AddWithValue("$credit", entry.Credit);
+        cmd.Parameters.AddWithValue("$id", entry.Id);
+        cmd.ExecuteNonQuery();
+    }
+
     public void Delete(int id)
     {
         using var connection = DbConnectionFactory.CreateConnection();
