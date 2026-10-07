@@ -25,7 +25,7 @@ jobs:
     steps:
 
       # ============================================================
-      # Checkout source code
+      # 1. Checkout repository
       # ============================================================
 
       - name: Checkout repository
@@ -33,13 +33,14 @@ jobs:
 
 
       # ============================================================
-      # Setup Node.js 24
+      # 2. Setup Node.js 24
       # ============================================================
 
       - name: Setup Node.js 24
         uses: actions/setup-node@v7
         with:
           node-version: '24'
+          package-manager-cache: false
 
       - name: Verify Node.js
         shell: pwsh
@@ -52,10 +53,10 @@ jobs:
 
 
       # ============================================================
-      # Setup .NET 8
+      # 3. Setup .NET 8
       # ============================================================
 
-      - name: Setup .NET SDK
+      - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
@@ -63,23 +64,23 @@ jobs:
       - name: Verify .NET
         shell: pwsh
         run: |
-          Write-Host ".NET SDK:"
+          Write-Host ".NET SDK version:"
           dotnet --version
 
-          Write-Host ".NET SDK information:"
+          Write-Host ".NET information:"
           dotnet --info
 
 
       # ============================================================
-      # Restore
+      # 4. Restore NuGet packages
       # ============================================================
 
       - name: Restore NuGet packages
-        run: dotnet restore AccountingSystem.App/AccountingSystem.App.csproj
+        run: dotnet restore AccountingSystem.sln
 
 
       # ============================================================
-      # Install Inno Setup
+      # 5. Install Inno Setup
       # ============================================================
 
       - name: Install Inno Setup
@@ -89,52 +90,19 @@ jobs:
 
           $innoPath = "C:\Program Files (x86)\Inno Setup 6"
 
-          $env:Path += ";$innoPath"
+          if (-not (Test-Path $innoPath)) {
+              throw "Inno Setup installation directory not found: $innoPath"
+          }
 
           $innoPath | Out-File `
             -FilePath $env:GITHUB_PATH `
             -Encoding utf8 `
             -Append
 
-          Write-Host "Inno Setup installed."
+          Write-Host "Inno Setup installed successfully."
+          Write-Host "Inno Setup path: $innoPath"
 
 
       # ============================================================
-      # Build solution
-      # ============================================================
-
-      - name: Build solution
-        run: dotnet build AccountingSystem.sln -c Release --no-restore
-
-
-      # ============================================================
-      # Publish application and create installer
-      # ============================================================
-
-      - name: Publish and build installer
-        shell: pwsh
-        run: |
-          Set-StrictMode -Version Latest
-
-          Write-Host "Running build-installer.ps1..."
-
-          .\build-installer.ps1 `
-            -Configuration Release `
-            -Runtime win-x64
-
-
-      # ============================================================
-      # Code signing
-      # Only runs when signing secrets exist
-      # ============================================================
-
-      - name: Code sign published binaries and installer
-        if: ${{ env.SIGN_PFX != '' && env.SIGN_PASSWORD != '' }}
-        shell: pwsh
-        run: |
-          Set-StrictMode -Version Latest
-
-          Write-Host "Preparing certificate file..."
-
-          $pfxBytes = [System.Convert]::FromBase64String(
-            $env:
+      # 6. Build solution
+      # =====
